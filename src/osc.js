@@ -352,7 +352,13 @@ var osc = osc || {};
     osc.readBlob = function (dv, offsetState) {
         var len = osc.readInt32(dv, offsetState),
             paddedLen = (len + 3) & ~0x03,
+            blob;
+
+        if (osc.isNode) {
+            blob = dv.buffer.slice(offsetState.idx, offsetState.idx + len);
+        } else {
             blob = new Uint8Array(dv.buffer, offsetState.idx, len);
+        }
 
         offsetState.idx += paddedLen;
 
