@@ -122,9 +122,9 @@ var osc = osc || {};
 
     // Unsupported, non-API function
     osc.copyByteArray = function (source, target, offset) {
-        if (osc.isBuffer(source)) {
-            if (!osc.isBuffer(target)) {
-                target = new Buffer(target);
+        if (osc.isBuffer(target)) {
+            if (!osc.isBuffer(sourt)) {
+                source = new Buffer(source);
             }
             source.copy(target, offset);
         } else if (osc.isTypedArrayView(source) && osc.isTypedArrayView(target)) {
