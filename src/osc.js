@@ -122,10 +122,13 @@ var osc = osc || {};
 
     // Unsupported, non-API function
     osc.copyByteArray = function (source, target, offset) {
-        if (osc.isTypedArrayView(source) && osc.isTypedArrayView(target)) {
-            target.set(source, offset);
-        } else if (osc.isBuffer(source) && osc.isBuffer(target)) {
+        if (osc.isBuffer(source)) {
+            if (!osc.isBuffer(target)) {
+                target = new Buffer(target);
+            }
             source.copy(target, offset);
+        } else if (osc.isTypedArrayView(source) && osc.isTypedArrayView(target)) {
+            target.set(source, offset);
         } else {
             var start = offset === undefined ? 0 : offset,
                 len = Math.min(target.length - offset, source.length);
