@@ -1,4 +1,4 @@
-/*! osc.js 1.3.0, Copyright 2015 Colin Clark | github.com/colinbdclark/osc.js */
+/*! osc.js 1.3.0, Copyright 2016 Colin Clark | github.com/colinbdclark/osc.js */
 
 /*
  * osc.js: An Open Sound Control library for JavaScript that works in both the browser and Node.js
@@ -124,10 +124,13 @@ var osc = osc || {};
 
     // Unsupported, non-API function
     osc.copyByteArray = function (source, target, offset) {
-        if (osc.isTypedArrayView(source) && osc.isTypedArrayView(target)) {
-            target.set(source, offset);
-        } else if (osc.isBuffer(source) && osc.isBuffer(target)) {
+        if (osc.isBuffer(source)) {
+            if (!osc.isBuffer(target)) {
+                target = new Buffer(target);
+            }
             source.copy(target, offset);
+        } else if (osc.isTypedArrayView(source) && osc.isTypedArrayView(target)) {
+            target.set(source, offset);
         } else {
             var start = offset === undefined ? 0 : offset,
                 len = Math.min(target.length - offset, source.length);
@@ -354,7 +357,13 @@ var osc = osc || {};
     osc.readBlob = function (dv, offsetState) {
         var len = osc.readInt32(dv, offsetState),
             paddedLen = (len + 3) & ~0x03,
+            blob;
+
+        if (osc.isNode) {
+            blob = dv.buffer.slice(offsetState.idx, offsetState.idx + len);
+        } else {
             blob = new Uint8Array(dv.buffer, offsetState.idx, len);
+        }
 
         offsetState.idx += paddedLen;
 
