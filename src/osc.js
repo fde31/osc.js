@@ -527,12 +527,14 @@ var osc = osc || {};
      * relative to now by the specified number of seconds.
      *
      * @param {Number} secs the number of seconds relative to now (i.e. + for the future, - for the past)
+     * @param {Number} now the number of milliseconds since epoch to use as the current time. Defaults to Date.now()
      * @return {Object} the time tag
      */
-    osc.timeTag = function (secs) {
+    osc.timeTag = function (secs, now) {
         secs = secs || 0;
+        now = now || Date.now();
 
-        var nowSecs = Date.now() / 1000,
+        var nowSecs = now / 1000,
             nowWhole = Math.floor(nowSecs),
             nowFracs = nowSecs - nowWhole,
             secsWhole = Math.floor(secs),
@@ -807,8 +809,18 @@ var osc = osc || {};
      */
     osc.writeMessage = function (msg, options) {
         options = options || osc.defaults;
+
+        if (!osc.isValidMessage(msg)) {
+            throw new Error("An OSC message must contain a valid address. Message was: " +
+                JSON.stringify(msg, null, 2));
+        }
+
         var msgCollection = osc.collectMessageParts(msg, options);
         return osc.joinParts(msgCollection);
+    };
+
+    osc.isValidMessage = function (msg) {
+        return msg.address && msg.address.indexOf("/") === 0;
     };
 
     /**
@@ -854,14 +866,19 @@ var osc = osc || {};
      * @return {Uint8Array} an array of bytes containing the message
      */
     osc.writeBundle = function (bundle, options) {
-        if (!bundle.timeTag || !bundle.packets) {
-            return;
+        if (!osc.isValidBundle(bundle)) {
+            throw new Error("An OSC bundle must contain 'timeTag' and 'packets' properties. " +
+                "Bundle was: " + JSON.stringify(bundle, null, 2));
         }
 
         options = options || osc.defaults;
         var bundleCollection = osc.collectBundlePackets(bundle, options);
 
         return osc.joinParts(bundleCollection);
+    };
+
+    osc.isValidBundle = function (bundle) {
+        return bundle.timeTag !== undefined && bundle.packets !== undefined;
     };
 
     // Unsupported, non-API function.
@@ -919,8 +936,14 @@ var osc = osc || {};
      * @return {Uint8Array} an array of bytes containing the message
      */
     osc.writePacket = function (packet, options) {
-        var writer = packet.address ? osc.writeMessage : osc.writeBundle;
-        return writer(packet, options);
+        if (osc.isValidMessage(packet)) {
+            return osc.writeMessage(packet, options);
+        } else if (osc.isValidBundle(packet)) {
+            return osc.writeBundle(packet, options);
+        } else {
+            throw new Error("The specified packet was not recognized as a valid OSC message or bundle." +
+                " Packet was: " + JSON.stringify(packet, null, 2));
+        }
     };
 
     // Unsupported, non-API.
