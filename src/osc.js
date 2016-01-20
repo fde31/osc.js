@@ -123,7 +123,7 @@ var osc = osc || {};
     // Unsupported, non-API function
     osc.copyByteArray = function (source, target, offset) {
         if (osc.isBuffer(target)) {
-            if (!osc.isBuffer(sourt)) {
+            if (!osc.isBuffer(source)) {
                 source = new Buffer(source);
             }
             source.copy(target, offset);
